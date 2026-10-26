@@ -1,0 +1,81 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: BRANDES_KOEPF
+---
+%% ARQ-01 v1.1 · D5 · Capa física en el datacenter de DATIC (Alternativa B, DE-13)
+%% SIMULACIÓN ACADÉMICA: direcciones en rangos reservados para documentación (RFC 5737). No son direcciones reales.
+flowchart LR
+  USR["Usuarios<br/>Internet · red interna"]
+  ADM["Administrador tecnológico<br/>VPN institucional + 2FA"]
+
+  subgraph DMZ["Z1 · Perímetro DATIC · 203.0.113.0/24"]
+    direction TB
+    VIP(["Dirección pública del sistema<br/>203.0.113.10 :443<br/>subdominio solicitado a DATIC"])
+    LB1["sigep-lb01 · 203.0.113.11<br/>Nginx + WAF · 2 vCPU · 4 GB · 40 GB"]
+    LB2["sigep-lb02 · 203.0.113.12<br/>Nginx + WAF · 2 vCPU · 4 GB · 40 GB"]
+  end
+
+  subgraph APP["Z2 · Aplicación · 198.51.100.0/26 · clúster K3s"]
+    direction TB
+    A1["sigep-app01 · 198.51.100.11<br/>8 vCPU · 16 GB · 100 GB SSD<br/>web · Keycloak · API ×2 · GeoServer · Redis"]
+    A2["sigep-app02 · 198.51.100.12<br/>8 vCPU · 16 GB · 100 GB SSD<br/>web · Celery · API ×2 · GeoServer · Redis"]
+    A3["sigep-app03 · 198.51.100.13<br/>8 vCPU · 16 GB · 100 GB SSD<br/>Keycloak · Celery · API ×2 · ClamAV · Beat"]
+  end
+
+  subgraph DAT["Z3 · Datos · 198.51.100.64/26"]
+    direction TB
+    DB1[("sigep-db01 · 198.51.100.71<br/>PostgreSQL + PostGIS principal<br/>4 vCPU · 16 GB · 100 GB SSD")]
+    DB2[("sigep-db02 · 198.51.100.72<br/>réplica · 4 vCPU · 16 GB · 100 GB SSD")]
+    OBJ[("sigep-obj01 a 04 · 198.51.100.81 a .84<br/>almacenamiento compatible con S3<br/>4 nodos")]
+  end
+
+  subgraph GES["Z4 · Gestión · 198.51.100.128/26"]
+    direction TB
+    MON["sigep-mon01 · 198.51.100.141<br/>Prometheus · Grafana · Loki<br/>4 vCPU · 8 GB · 200 GB"]
+    BK1[("sigep-bkp01 · 198.51.100.151<br/>respaldo local")]
+  end
+
+  subgraph EXT["Sitio externo · 198.51.100.192/26"]
+    BK2[("sigep-bkx01 · 198.51.100.201<br/>respaldo externo")]
+  end
+
+  subgraph INS["Z5 · Servicios institucionales (direcciones por confirmar)"]
+    direction TB
+    DIR["IF-01 Directorio"]
+    MSG["IF-02 Correo"]
+    GD["IF-03 Gestión documental"]
+    IDE["IF-05 IDESC"]
+  end
+
+  USR -->|"HTTPS 443"| VIP
+  VIP --- LB1 & LB2
+  LB1 -->|"HTTP 80 · red privada · ingreso del clúster"| A2
+  LB1 --> A1 & A3
+  LB2 --> A1 & A2 & A3
+  A1 -->|"5432"| DB1
+  A2 & A3 --> DB1
+  DB1 -->|"replicación 5432"| DB2
+  A2 -->|"API S3 9000"| OBJ
+  A1 & A3 --> OBJ
+  A3 -.->|"HTTPS 443 · LDAPS 636 · SMTP 587"| INS
+  A1 & A2 -.-> INS
+  DB1 & OBJ -->|"copia diaria"| BK1
+  BK1 -->|"copia externa"| BK2
+  MON -.->|"métricas 9100 · registros 3100"| APP
+  ADM -->|"VPN · SSH 22 · HTTPS 443"| MON
+
+  classDef edge fill:#5B6B7F,stroke:#3B4757,color:#fff
+  classDef app fill:#1F3864,stroke:#14264A,color:#fff
+  classDef data fill:#0F2A4A,stroke:#081A30,color:#fff
+  classDef ops fill:#7F5A1F,stroke:#5A3F14,color:#fff
+  classDef ext fill:#F2F2F2,stroke:#888,color:#333,stroke-dasharray: 5 3
+  classDef user fill:#E8EEF7,stroke:#1F3864,color:#1F3864
+  class VIP,LB1,LB2 edge
+  class A1,A2,A3 app
+  class DB1,DB2,OBJ data
+  class MON,BK1,BK2 ops
+  class DIR,MSG,GD,IDE ext
+  class USR,ADM user

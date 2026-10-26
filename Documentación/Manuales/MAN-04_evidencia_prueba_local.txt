@@ -1,0 +1,40 @@
+MAN-04 · Evidencia de prueba de respaldo y restauración
+=======================================================
+ENTORNO ACADÉMICO LOCAL — NO es una prueba institucional ni del ambiente de DATIC.
+Fecha: 2026-10-23 · PostgreSQL 16.15 · PostGIS 3.4.2 · pgBackRest 2.50 · restic 0.16.4
+Datos: base de prueba creada con los scripts 01 a 03 (100 % simulados).
+
+PRUEBA 1 · Base de datos: respaldo completo cifrado y recuperación a un punto en el tiempo (pgBackRest)
+-------------------------------------------------------------------------------------------------------
+1. Configuración: repositorio cifrado AES-256-CBC, compresión zstd, archivo continuo de WAL
+   (archive_mode=on, archive_command=pgbackrest archive-push).
+2. stanza-create y check: correctos.
+3. Respaldo completo 20261023-124036F: 47,8 MB de base → 5 MB en el repositorio; duración ≈ 4,2 s.
+   Conteos al respaldar: 3 solicitudes · 7 registros de historial · 64 de bitácora.
+4. Cambio legítimo DESPUÉS del respaldo: la solicitud 2027-0002 pasa a «Aprobada».
+5. Punto objetivo marcado: 2026-10-23 12:40:53-05.
+6. Error simulado DESPUÉS del punto objetivo: UPDATE masivo que sobrescribe la descripción
+   de todas las solicitudes («ERROR SIMULADO: texto sobrescrito»).
+7. Restauración --type=time al punto objetivo en una instancia separada (puerto 5434): ≈ 2,1 s.
+   Resultado en la copia restaurada:
+     2027-0001 | SIMULADO. Excavación para reposición de tuber… | Aprobada
+     2027-0002 | SIMULADO. Cierre parcial de un carril para iz… | Aprobada   ← cambio legítimo conservado
+     2027-0003 | SIMULADO. Ocupación temporal de andén para ac… | Radicada
+   El error simulado NO aparece. Conteos: 3 solicitudes · 8 historial · 65 bitácora.
+8. Verificación en la copia: triggers deshabilitados = 0; geometrías no válidas = 0;
+   solicitudes sin historial = 0; UPDATE sobre historial_estado → rechazado (solo inserción, RNF-11).
+CONCLUSIÓN: el procedimiento de recuperación a un punto en el tiempo funciona con el esquema del
+sistema y conserva las reglas de integridad y auditoría. Los tiempos NO son representativos del
+volumen de producción (≈ 9 GB de base de datos al año 5).
+
+PRUEBA 2 · Archivos: respaldo cifrado y restauración con verificación SHA-256 (restic)
+--------------------------------------------------------------------------------------
+1. Archivos de ejemplo (3 archivos de una solicitud simulada) y sus sumas SHA-256.
+2. restic init (repositorio cifrado AES-256) y backup con etiqueta «diario».
+3. Pérdida simulada: se borra plano_localizacion.pdf del origen.
+4. restic restore latest: 10 archivos/directorios restaurados.
+5. Comparación de sumas SHA-256 origen frente a restaurado: idénticas.
+6. restic check: sin errores.
+CONCLUSIÓN: el procedimiento de restauración de archivos con verificación de integridad funciona.
+
+Ninguna contraseña de esta prueba se usa fuera del entorno local.

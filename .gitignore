@@ -1,0 +1,32 @@
+# Secretos y configuración local: NUNCA se versionan (Taller 2, §8.5 y criterio S-06)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+
+# Dependencias y compilados
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+.venv/
+
+# Datos: no se versionan datos reales ni respaldos (Ley 1581 de 2012)
+*.dump
+*.backup
+datos-reales/
+
+# Editores y sistema
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Borradores editables: viven en el paquete técnico, no en el repositorio
+*.docx
+*.xlsx
+~$*

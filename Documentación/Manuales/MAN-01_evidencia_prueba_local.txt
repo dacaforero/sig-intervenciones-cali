@@ -1,0 +1,39 @@
+MAN-01 · Evidencia de prueba de instalación en ENTORNO ACADÉMICO LOCAL (no es una instalación institucional)
+Fecha: 2026-10-23T17:49Z · Equipo: contenedor Linux de trabajo, datos sin cargar (solo catálogos)
+Sistema: Ubuntu 24.04.5 LTS · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · PostGIS 3.4.2 · nginx version: nginx/1.24.0 (Ubuntu)
+
+== 1. Base limpia + extensión + script 01 + script 02 (03 NO se ejecuta: datos simulados)
+01_creacion_esquema.sql -> código de salida 0 · 02_carga_catalogos.sql -> código de salida 0
+Tablas en los 6 esquemas: 34
+Disparadores definidos: 31
+SRID disponibles 6249/9377: 6249,9377
+Filas en catálogos (estado_tramite): 9
+
+== 2. Consultas de verificación de MAN-03 (Q1, Q2, Q10)
+ esquema | tabla | trigger | estado 
+---------+-------+---------+--------
+(0 rows)
+
+ geometrias_invalidas 
+----------------------
+                    0
+(1 row)
+
+ solicitudes_sin_historial 
+---------------------------
+                         0
+(1 row)
+
+== 3. Cuentas de conexión con roles de grupo (claves de prueba locales, NO reutilizables)
+sigep_app_login lee catálogos: 9
+sigep_geoserver_login lee publicacion.v_intervenciones: ok, filas=0
+sigep_geoserver_login intenta leer nucleo.solicitud (esperado: denegado): ERROR:  permission denied for schema nucleo
+sigep_sync_login: uso de referencia / uso de nucleo (esperado t|f): t|f
+
+== 4. Validación sintáctica de la configuración de ejemplo del proxy (anexo A de MAN-01)
+Primer intento con la directiva 'http2 on;' -> nginx 1.24: unknown directive "http2" (la directiva existe desde nginx 1.25.1).
+Corregido a 'listen 443 ssl http2;':
+nginx: the configuration file /ruta-local/nginx.conf syntax is ok
+nginx: configuration file /ruta-local/nginx.conf test is successful
+
+Limitaciones: no se instalaron K3s, Keycloak, GeoServer, ClamAV, Redis ni almacenamiento S3; no hubo red real, réplica ni certificados de una autoridad. La autenticación local fue por socket. Esta prueba no reemplaza la instalación en el ambiente de pruebas de DATIC (guía 4.1) ni las pruebas de Karol (PRU-xx).

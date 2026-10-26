@@ -1,0 +1,1 @@
+Manuales exigidos por la guía (4.2), completos: MAN-01 Instalación (v1.3), MAN-02 Operación (v1.1), MAN-03 Mantenimiento (v1.0) y MAN-04 Copias de seguridad y restauración (v1.0). Cada uno con su evidencia de prueba en entorno académico local.

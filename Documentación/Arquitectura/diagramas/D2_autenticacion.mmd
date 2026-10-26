@@ -1,0 +1,36 @@
+%% ARQ-01 · D2 · Autenticación y autorización (OpenID Connect) — propuesta académica v1.0
+sequenceDiagram
+  autonumber
+  participant U as Usuario
+  participant P as Cliente web PWA
+  participant W as C01 Proxy y WAF
+  participant K as C04 Keycloak
+  participant D as IF-01 Directorio institucional
+  participant A as C03 API REST
+  participant R as C11 Redis
+  participant B as C09 PostgreSQL
+  U->>P: Abre el sistema
+  P->>W: Redirige a /auth (L01, L04)
+  W->>K: Página de inicio de sesión
+  alt Usuario interno (cuenta institucional)
+    K->>D: Federación OIDC / SAML 2.0 (LDAPS alternativa) (L19)
+    D-->>K: Identidad y grupos
+    Note over K,D: Mapeo de grupos → rol propuesto.<br/>Sin acceso hasta que el coordinador lo habilite (§7.2)
+  else Solicitante externo (cuenta local)
+    K->>K: Verifica contraseña (hash adaptativo)<br/>bloqueo 15 min tras 5 intentos
+  end
+  opt Administrador tecnológico
+    K->>U: Exige segundo factor (TOTP o llave)
+  end
+  K-->>P: Código de autorización → tokens (acceso 10 min)
+  P->>W: Petición a /api con token (L03)
+  W->>A: Reenvía (límite de tasa aplicado)
+  A->>K: Valida firma y vigencia con las claves públicas (L06, en caché)
+  A->>B: Rol y alcance del usuario (L07)
+  A->>R: Estado de sesión (L08)
+  alt Rol autorizado (matriz Tabla 55)
+    A-->>P: 200 · datos dentro de su alcance
+  else Sin permiso
+    A-->>P: 403 · evento registrado en bitácora
+  end
+  Note over P,A: La sesión expira a los 30 min de inactividad (aviso a los 28 min)

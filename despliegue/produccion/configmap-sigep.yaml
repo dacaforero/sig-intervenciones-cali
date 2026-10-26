@@ -1,0 +1,26 @@
+# EJEMPLO SIMULADO (Taller 3) — esqueleto alineado con MAN-01. No se ha aplicado en ningún clúster.
+# Debe validarse con el código real (pendiente D9). Direcciones RFC 5737 y dominios example.*
+# Variables NO sensibles (MAN-01 §11). Las sensibles van en el Secret sigep-secretos.
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: sigep-config, namespace: sigep }
+data:
+  APP_ENTORNO: "produccion"
+  APP_URL_PUBLICA: "https://sig-intervenciones.example.org"
+  APP_ZONA_HORARIA: "America/Bogota"
+  APP_SRID_ALMACENAMIENTO: "9377"
+  DB_HOST: "198.51.100.71"
+  DB_PUERTO: "5432"
+  DB_NOMBRE: "sigep"
+  DB_USUARIO_APP: "sigep_app_login"
+  S3_ENDPOINT: "https://s3.example.internal"
+  S3_BUCKET: "sigep-archivos"
+  OIDC_EMISOR: "https://sig-intervenciones.example.org/auth/realms/sigep"
+  OIDC_CLIENTE_ID: "sigep-api"
+  CLAMAV_HOST: "clamav"
+  CLAMAV_PUERTO: "3310"
+  ARCHIVO_TAMANO_MAX_MB: "50"
+  ARCHIVOS_MAX_POR_SOLICITUD: "12"
+  UMBRAL_DUPLICIDAD_M: "50"
+  RADIO_CONSULTA_M: "100"
+  PRECISION_GPS_ADVERTENCIA_M: "10"

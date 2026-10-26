@@ -1,0 +1,34 @@
+# EJEMPLO SIMULADO (Taller 3) — esqueleto alineado con MAN-01. No se ha aplicado en ningún clúster.
+# Debe validarse con el código real (pendiente D9). Direcciones RFC 5737 y dominios example.*
+# Despliegue de la API (C03): MAN-01 §6 y anexo C.
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: sigep-api, namespace: sigep }
+spec:
+  replicas: 6                                  # 2 por nodo (ARQ-01, Tabla 40)
+  selector: { matchLabels: { app: sigep-api } }
+  template:
+    metadata: { labels: { app: sigep-api } }
+    spec:
+      topologySpreadConstraints:
+        - { maxSkew: 1, topologyKey: kubernetes.io/hostname, whenUnsatisfiable: DoNotSchedule,
+            labelSelector: { matchLabels: { app: sigep-api } } }
+      containers:
+        - name: api
+          image: registro.example.internal/sigep/backend:VERSION
+          ports: [ { containerPort: 8000 } ]
+          envFrom:
+            - configMapRef: { name: sigep-config }
+            - secretRef:    { name: sigep-secretos }   # se crea a mano (MAN-01 §11); nunca en el repositorio
+          readinessProbe: { httpGet: { path: /api/salud, port: 8000 }, periodSeconds: 10 }
+          resources:
+            requests: { cpu: "500m", memory: "768Mi" }
+            limits:   { cpu: "1",    memory: "1Gi" }
+          securityContext: { runAsNonRoot: true, readOnlyRootFilesystem: true, allowPrivilegeEscalation: false }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: sigep-api, namespace: sigep }
+spec:
+  selector: { app: sigep-api }
+  ports: [ { port: 8000, targetPort: 8000 } ]

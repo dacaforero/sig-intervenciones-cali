@@ -1,0 +1,33 @@
+%% ARQ-01 · D3 · Carga de archivos con análisis antivirus y radicación — propuesta académica v1.0
+sequenceDiagram
+  autonumber
+  participant S as Solicitante externo
+  participant P as Cliente web PWA
+  participant A as C03 API REST
+  participant V as C08 ClamAV
+  participant O as C10 Almacenamiento S3
+  participant B as C09 PostgreSQL
+  participant Q as C11 Redis (cola)
+  participant C as C06 Celery
+  participant M as IF-02 Mensajería
+  S->>P: Adjunta archivo (≤ 50 MB, máx. 12)
+  P->>A: Carga fragmentada y reanudable (L03)
+  A->>A: Valida formato, tamaño y cantidad
+  A->>V: Escanea el contenido (L10)
+  alt Archivo malicioso
+    V-->>A: Infectado
+    A-->>P: Rechazo con motivo · evento en bitácora
+  else Archivo limpio
+    V-->>A: Limpio
+    A->>O: Guarda objeto + SHA-256 (L09)
+    A-->>P: Identificador del archivo
+  end
+  S->>P: Radica la solicitud
+  P->>A: Datos + geometría + archivos
+  A->>B: Valida reglas espaciales y guarda en una transacción (L07)
+  Note over A,B: Triggers: comuna por intersección, estado «Radicada»,<br/>historial y bitácora (MD-01 §8)
+  A->>Q: Encola notificación y detección de conflictos (L08)
+  A-->>P: Número de radicado AAAA-NNNN + comprobante
+  C->>Q: Toma tareas (L12)
+  C->>M: Envía correo · 3 reintentos (15 s, 60 s, 180 s) (L15)
+  Note over C,M: Si la mensajería falla, la radicación no se bloquea (RNF-12)

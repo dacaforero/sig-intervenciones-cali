@@ -1,0 +1,112 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: BRANDES_KOEPF
+---
+%% ARQ-01 · D1 · Arquitectura lógica de producción
+%% Sistema SIG para la Gestión de Intervenciones en el Espacio Público de Cali
+%% Propuesta académica v1.1 · La capa física en el datacenter de DATIC está en D5
+flowchart LR
+  subgraph Z0["Z0 · Usuarios — Internet y red interna"]
+    direction TB
+    U1["Solicitante externo<br/>navegador o móvil"]
+    U2["Revisor y coordinador<br/>navegador (red interna)"]
+    U3["Inspector de campo<br/>móvil · sin conexión"]
+    PWA["Cliente web PWA<br/>React + TypeScript + OpenLayers<br/>portal · bandeja · panel · módulo de visitas<br/>caché local: borradores y cola de visitas"]
+    EXT["Clientes SIG externos<br/>cuenta de servicio (SP-01)"]
+  end
+
+  subgraph Z1["Z1 · Perímetro (DMZ)"]
+    WAF["C01 · Proxy inverso y WAF<br/>Nginx · TLS ≥ 1.2 · límites de tasa"]
+  end
+
+  subgraph Z2["Z2 · Aplicación (contenedores)"]
+    direction TB
+    WEB["C02 · Servidor web del cliente<br/>archivos estáticos de la PWA"]
+    API["C03 · API REST — FastAPI<br/>monolito modular (8 módulos)<br/>+ adaptador IDESC (WMS)"]
+    IDP["C04 · Proveedor de identidad<br/>Keycloak · OpenID Connect · 2FA"]
+    GS["C05 · GeoServer + GeoWebCache<br/>WMS · WFS · OGC API – Features"]
+    CEL["C06 · Tareas asíncronas — Celery<br/>adaptadores: mensajería, gestión documental<br/>sincronización IDESC"]
+    BEAT["C07 · Programador de tareas<br/>Celery Beat"]
+    AV["C08 · Análisis de archivos<br/>ClamAV"]
+  end
+
+  subgraph Z3["Z3 · Datos"]
+    direction TB
+    DB[("C09 · PostgreSQL + PostGIS<br/>principal → réplica<br/>catalogo · nucleo · referencia · auditoria")]
+    S3[("C10 · Almacenamiento de objetos<br/>API S3 · cifrado · versionado")]
+    RD[("C11 · Redis<br/>sesiones · colas · caché WMS")]
+  end
+
+  subgraph Z4["Z4 · Gestión y operación (acceso solo por VPN)"]
+    direction TB
+    MON["C12 · Monitoreo y registros<br/>Prometheus · Grafana · Loki<br/><i>L27: recibe métricas y registros<br/>de todos los componentes</i>"]
+    BK[("C13 · Respaldo local<br/>copia 2 · diario")]
+    BKX[("C14 · Respaldo externo<br/>copia 3 · otro sitio")]
+    SEC["C15 · Gestor de secretos<br/>tecnología por definir<br/><i>L30: entrega credenciales<br/>a los componentes al iniciar</i>"]
+    ADM["Administrador tecnológico<br/>VPN institucional + 2FA"]
+  end
+
+  subgraph Z5["Z5 · Servicios institucionales externos"]
+    direction TB
+    DIR["IF-01 · Directorio de usuarios"]
+    MSG["IF-02 · Mensajería (correo)"]
+    GD["IF-03 · Gestión documental"]
+    IDE["IF-05 · IDESC<br/>WMS · WFS"]
+  end
+
+  U1 & U2 & U3 --- PWA
+  PWA -->|"L01 HTTPS"| WAF
+  EXT -->|"L01 HTTPS"| WAF
+  WAF -->|"L02"| WEB
+  WAF -->|"L03 /api"| API
+  WAF -->|"L04 /auth"| IDP
+  WAF -->|"L05 /ows"| GS
+
+  API -->|"L06 tokens"| IDP
+  API -->|"L07 SQL"| DB
+  API -->|"L08"| RD
+  API -->|"L09 S3"| S3
+  API -->|"L10 escaneo"| AV
+  API -.->|"L17 WMS"| IDE
+
+  BEAT -->|"L11"| RD
+  CEL <-->|"L12 cola"| RD
+  CEL -->|"L13 SQL"| DB
+  CEL -->|"L14 S3"| S3
+  CEL -.->|"L15 SMTP/API"| MSG
+  CEL -.->|"L16 REST"| GD
+  CEL -.->|"L18 WFS → referencia"| IDE
+
+  IDP -.->|"L19 federación"| DIR
+  IDP -->|"L20 SQL (BD propia)"| DB
+  IDP -.->|"L21 correo de verificación"| MSG
+  GS -->|"L22 SQL solo lectura"| DB
+  GS -->|"L23 tokens"| IDP
+
+  DB -->|"L24 replicación"| DB
+  DB & S3 -->|"L25 copia diaria"| BK
+  BK -->|"L26"| BKX
+
+  MON -.->|"L28 alertas ≤ 5 min"| MSG
+  ADM -->|"L29 VPN"| MON
+
+  classDef user fill:#E8EEF7,stroke:#1F3864,color:#1F3864
+  classDef edge fill:#5B6B7F,stroke:#3B4757,color:#fff
+  classDef app fill:#1F3864,stroke:#14264A,color:#fff
+  classDef geo fill:#2E7D4F,stroke:#1F5A38,color:#fff
+  classDef data fill:#0F2A4A,stroke:#081A30,color:#fff
+  classDef ops fill:#7F5A1F,stroke:#5A3F14,color:#fff
+  classDef ext fill:#F2F2F2,stroke:#888,color:#333,stroke-dasharray: 5 3
+  classDef prop fill:#1F3864,stroke:#E0A800,stroke-width:3px,color:#fff
+  class U1,U2,U3,PWA,EXT user
+  class WAF edge
+  class WEB,API,IDP,CEL,AV app
+  class BEAT prop
+  class GS geo
+  class DB,S3,RD data
+  class MON,BK,BKX,ADM ops
+  class SEC ops
+  class DIR,MSG,GD,IDE ext

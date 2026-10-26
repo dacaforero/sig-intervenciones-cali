@@ -1,0 +1,21 @@
+# EJEMPLO SIMULADO (Taller 3) — esqueleto alineado con MAN-01. No se ha aplicado en ningún clúster.
+# Debe validarse con el código real (pendiente D9). Direcciones RFC 5737 y dominios example.*
+# Celery Beat (C07): SIEMPRE una réplica (MAN-01 §3.1 y §16).
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: sigep-beat, namespace: sigep }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }                 # evita dos programadores durante una actualización
+  selector: { matchLabels: { app: sigep-beat } }
+  template:
+    metadata: { labels: { app: sigep-beat } }
+    spec:
+      nodeSelector: { sigep/beat: "si" }       # sigep-app03 (Tabla 40)
+      containers:
+        - name: beat
+          image: registro.example.internal/sigep/backend:VERSION
+          args: ["celery", "beat"]             # comando real por definir con el código
+          envFrom:
+            - configMapRef: { name: sigep-config }
+            - secretRef:    { name: sigep-secretos }

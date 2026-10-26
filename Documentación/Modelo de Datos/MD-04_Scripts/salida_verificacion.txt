@@ -1,0 +1,116 @@
+-- Salida de verificación del modelo de datos
+-- Ejecutado en ENTORNO ACADÉMICO LOCAL de prueba (no es un ambiente institucional)
+-- Fecha: 2026-10-23 · PostgreSQL 16.15 · PostGIS 3.4.2 · PROJ 9.4.0
+-- Orden: 01_creacion_esquema.sql, 02_carga_catalogos.sql, 03_datos_ejemplo_SIMULADOS.sql, 04_verificacion.sql
+-- Datos: 100 % simulados
+
+### 01_creacion_esquema.sql
+### 02_carga_catalogos.sql
+### 03_datos_ejemplo_SIMULADOS.sql
+### 04_verificacion.sql
+== V-01 Inventario de objetos por esquema
+   esquema   | tablas | vistas 
+-------------+--------+--------
+ auditoria   |      2 |      0
+ catalogo    |      6 |      0
+ nucleo      |     22 |      0
+ publicacion |      0 |      2
+ referencia  |      4 |      0
+
+== V-02 Columnas geométricas y SRID
+  esquema   |         tabla          |    columna    |      tipo       | srid 
+------------+------------------------+---------------+-----------------+------
+ nucleo     | evidencia              | geom          | GEOMETRY        | 9377
+ nucleo     | geometria_intervencion | geom          | GEOMETRY        | 9377
+ nucleo     | reporte                | geom          | GEOMETRY        | 9377
+ nucleo     | visita_tecnica         | ubicacion_gps | POINT           | 9377
+ referencia | comuna                 | geom          | MULTIPOLYGON    | 9377
+ referencia | espacio_publico        | geom          | MULTIPOLYGON    | 9377
+ referencia | infraestructura_vial   | geom          | MULTILINESTRING | 9377
+ referencia | zona_restriccion       | geom          | MULTIPOLYGON    | 9377
+
+== V-03 Relaciones espaciales calculadas por el trigger (comuna, vía, espacio público)
+ numero_radicado | tipo_geometria |       comuna       |           via            |    espacio_publico    
+-----------------+----------------+--------------------+--------------------------+-----------------------
+ 2027-0001       | Línea          | Comuna simulada 01 | Corredor simulado SIM-V1 | 
+ 2027-0002       | Polígono       | Comuna simulada 01 | Corredor simulado SIM-V1 | 
+ 2027-0003       | Polígono       | Comuna simulada 02 |                          | Andén simulado SIM-A1
+
+== V-04 Detección de conflictos para 2027-0002 (HU-08)
+ coincide_con |   tipo    |  nivel  | distancia_m 
+--------------+-----------+---------+-------------
+ 2027-0001    | Conflicto | Crítico |        0.00
+
+== V-05 Historial de estados de 2027-0001 (HU-12)
+        fecha        |   estado_nuevo    |           responsable            |                                 observacion                                  
+---------------------+-------------------+----------------------------------+------------------------------------------------------------------------------
+ 2026-10-23 10:44:03 | Radicada          | Empresa de Redes Simulada S.A.S. | 
+ 2026-10-23 10:44:03 | En revisión       | Coordinadora Simulada Uno        | 
+ 2026-10-23 10:44:03 | Visita programada | Coordinadora Simulada Uno        | 
+ 2026-10-23 10:44:03 | Aprobada          | Revisor Simulado Uno             | Aprobada condicionada a coordinar fechas con el cierre 2027-0002 (simulado).
+
+== V-06 Bitácora: eventos por entidad y acción
+            entidad            |  accion   | count 
+-------------------------------+-----------+-------
+ catalogo.estado_tramite       | Crear     |     9
+ catalogo.rol                  | Crear     |     6
+ catalogo.tipo_documento       | Crear     |     8
+ catalogo.tipo_intervencion    | Crear     |     7
+ nucleo.archivo                | Crear     |     8
+ nucleo.evidencia              | Crear     |     6
+ nucleo.expediente_documental  | Crear     |     1
+ nucleo.geometria_intervencion | Crear     |     3
+ nucleo.revision_tecnica       | Crear     |     1
+ nucleo.solicitud              | Crear     |     3
+ nucleo.solicitud              | Modificar |     4
+ nucleo.usuario                | Crear     |     6
+ nucleo.visita_tecnica         | Crear     |     1
+ nucleo.visita_tecnica         | Modificar |     1
+
+== V-07 Vista de publicación sin datos personales (SP-01)
+ numero_radicado | tipo_intervencion  |   estado    |       comuna       | srid 
+-----------------+--------------------+-------------+--------------------+------
+ 2027-0001       | Excavación         | Aprobada    | Comuna simulada 01 | 9377
+ 2027-0002       | Cierre             | En revisión | Comuna simulada 01 | 9377
+ 2027-0003       | Ocupación de andén | Radicada    | Comuna simulada 02 | 9377
+
+== V-08 Indicadores del panel (HU-18)
+   estado    | total 
+-------------+-------
+ Aprobada    |     1
+ En revisión |     1
+ Radicada    |     1
+
+       comuna       | total 
+--------------------+-------
+ Comuna simulada 01 |     2
+ Comuna simulada 02 |     1
+
+== V-09 Pruebas negativas (cada una debe imprimir RECHAZADA)
+psql:04_verificacion.sql:132: NOTICE:  N-01 editar historial ............. RECHAZADA: La tabla nucleo.historial_estado es de solo inserción (RNF-11): UPDATE no permitido
+psql:04_verificacion.sql:132: NOTICE:  N-02 borrar bitácora .............. RECHAZADA: La tabla auditoria.bitacora_auditoria es de solo inserción (RNF-11): DELETE no permitido
+psql:04_verificacion.sql:132: NOTICE:  N-03 Radicada → Finalizada ........ RECHAZADA: Transición de estado no válida: Radicada → Finalizada
+psql:04_verificacion.sql:132: NOTICE:  N-04 cuarta visita ................ RECHAZADA: Máximo 3 visitas técnicas por solicitud (HU-13, RS-10)
+psql:04_verificacion.sql:132: NOTICE:  N-05 geometría fuera de Cali ...... RECHAZADA: La geometría está fuera del perímetro de Cali (regla «Dentro del perímetro de Cali»)
+psql:04_verificacion.sql:132: NOTICE:  N-06 detalle de otro tipo ......... RECHAZADA: El detalle cierre no corresponde al tipo de la solicitud 1
+psql:04_verificacion.sql:132: NOTICE:  N-07 rechazo sin observación ...... RECHAZADA: new row for relation "revision_tecnica" violates check constraint "ck_revision_observacion"
+psql:04_verificacion.sql:132: NOTICE:  N-08 tipo de geometría incoherente  RECHAZADA: new row for relation "geometria_intervencion" violates check constraint "ck_geom_tipo"
+psql:04_verificacion.sql:132: NOTICE:  N-09 foto > 2,5 MB ................ RECHAZADA: new row for relation "evidencia" violates check constraint "ck_evidencia_foto"
+psql:04_verificacion.sql:132: NOTICE:  N-10 fechas invertidas ............ RECHAZADA: new row for relation "solicitud" violates check constraint "ck_solicitud_fechas"
+== V-10 Uso del índice espacial en la consulta de proximidad (RNF-03)
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
+ Nested Loop
+   ->  Bitmap Heap Scan on geometria_intervencion g1
+         Recheck Cond: (id_solicitud = 2)
+         ->  Bitmap Index Scan on ix_geom_solicitud
+               Index Cond: (id_solicitud = 2)
+   ->  Index Scan using ix_geom_intervencion_geom on geometria_intervencion g2
+         Index Cond: (geom && st_expand(g1.geom, '50'::double precision))
+         Filter: ((id_solicitud <> g1.id_solicitud) AND st_dwithin(g1.geom, geom, '50'::double precision))
+
+== V-11 Totales
+ tablas_fisicas | vistas_materializadas | triggers | postgis |              postgresql               
+----------------+-----------------------+----------+---------+---------------------------------------
+             34 |                     3 |       31 | 3.4.2   | 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+

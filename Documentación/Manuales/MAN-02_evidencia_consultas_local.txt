@@ -1,0 +1,80 @@
+MAN-02 · Evidencia de prueba de las consultas de operación en ENTORNO ACADÉMICO LOCAL
+Fecha: 2026-10-23T18:02Z · PostgreSQL 16.15 + PostGIS 3.4.2 · base con scripts 01, 02 y 03 (datos SIMULADOS)
+Casos agregados dentro de una transacción que se revierte al final: la solicitud 2027-0002 pasa a «Subsanación requerida»; un error de gestión documental de hace 30 h sin éxito posterior; un error de mensajería de hace 2 h resuelto 1 h después (no debe aparecer en O7).
+Comprobación adicional: el historial rechaza antedatar registros (solo inserción), por eso O3 no puede probarse con datos vencidos y su conteo de días hábiles se verifica aparte con fechas fijas.
+
+BEGIN
+SET
+SET
+SET
+UPDATE 1
+SAVEPOINT
+línea 6: ERROR:  La tabla nucleo.historial_estado es de solo inserción (RNF-11): UPDATE no permitido
+CONTEXT:  PL/pgSQL function auditoria.fn_solo_insercion() line 3 at RAISE
+ROLLBACK
+INSERT 0 3
+ orden |        estado         | solicitudes | mayor_permanencia 
+-------+-----------------------+-------------+-------------------
+     1 | Radicada              |           1 | 00:01:08.00043
+     2 | En revisión           |           0 | 
+     3 | Subsanación requerida |           1 | 00:00:00
+     4 | Visita programada     |           0 | 
+     5 | Aprobada              |           1 | 00:01:08.00043
+     6 | Rechazada             |           0 | 
+     7 | En ejecución          |           0 | 
+     8 | Finalizada            |           0 | 
+     9 | Cerrada               |           0 | 
+(9 rows)
+
+ numero_radicado |  estado  |        radicada        
+-----------------+----------+------------------------
+ 2027-0003       | Radicada | 2027-07-05 16:20:00-05
+(1 row)
+
+ numero_radicado | desde | dias_habiles 
+-----------------+-------+--------------
+(0 rows)
+
+   tipo    |  nivel  | alertas | menor_distancia_m 
+-----------+---------+---------+-------------------
+ Conflicto | Crítico |       1 |              0.00
+(1 row)
+
+ numero_radicado | fecha_programada | id_inspector | estado_implementacion 
+-----------------+------------------+--------------+-----------------------
+(0 rows)
+
+ numero_radicado | fecha_registro | precision_gps_m 
+-----------------+----------------+-----------------
+(0 rows)
+
+      interfaz      |  id_correlacion   | id_solicitud | reintentos |          fecha_hora           | requiere_accion_manual 
+--------------------+-------------------+--------------+------------+-------------------------------+------------------------
+ Gestión documental | SIM-2027-0003-RAD |            3 |          3 | 2026-10-22 07:02:31.265575-05 | t
+(1 row)
+
+             rol             | rol_activo | usuarios_activos 
+-----------------------------+------------+------------------
+ Solicitante externo         | t          |                2
+ Revisor técnico             | t          |                1
+ Inspector de campo          | t          |                1
+ Coordinador funcional       | t          |                1
+ Administrador tecnológico   | t          |                1
+ Auditoría / control interno | f          |                0
+(6 rows)
+
+ cuentas_sin_verificar 
+-----------------------
+                     0
+(1 row)
+
+ canal | radicaciones 
+-------+--------------
+(0 rows)
+
+ dias_habiles_esperado_6 
+-------------------------
+                       6
+(1 row)
+
+ROLLBACK
