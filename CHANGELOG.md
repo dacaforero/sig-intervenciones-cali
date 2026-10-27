@@ -3,6 +3,10 @@
 Formato basado en *Keep a Changelog*; versiones según *Semantic Versioning* (ver REP-01).
 
 ## [Sin publicar] — Taller 3
+### Agregado (implementación y solicitud)
+- `uso-y-apropiacion/`: estrategia de uso y apropiación UYA-01 v1.0 (Hillary Barrios Ordoñez y Mariana Durán Hoyos) y anexos A a F en los formatos MEDE01.08.04 (matriz de interesados, planes de movilización, comunicación y gamificación, cronograma de seguimiento y encuesta de preparación al cambio).
+- `solicitud/`: oficio SOL-01 v1.1 y formato de aprovisionamiento F001 v1.0 diligenciado para producción (Word y PDF).
+- README v0.5.
 ### Agregado
 - Estructura del repositorio según la guía de despliegue de DATIC (4.2) — REP-01.
 - `base-datos/`: scripts 01 a 04 verificados en entorno académico local (2026-10-23).

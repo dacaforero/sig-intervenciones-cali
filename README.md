@@ -1,12 +1,12 @@
 # Sistema SIG para la Gestión de Intervenciones en el Espacio Público de Santiago de Cali
 
-> **Propuesta académica · Taller 3 (Despliegue) · Gestión de Proyectos de Información Geoespacial · Universidad del Valle.**
+> **Propuesta académica · Taller 3 (Implementación, despliegue y solicitud) · Gestión de Proyectos de Información Geoespacial · Universidad del Valle.**
 > Este repositorio es un **ejercicio académico simulado**: organiza los artefactos que exige la *Guía de despliegue de
 > sistemas de información* de DATIC (MAGT04.04.01.P004.G001, apartado 4.2). El sistema **no ha sido desarrollado,
 > instalado ni aprobado**. Los datos de ejemplo, direcciones IP, dominios y radicados son ficticios y se identifican con el
 > prefijo `SIM-` o con rangos reservados para documentación.
 
-**Estado del README:** v0.4. **Infraestructura:** datacenter de DATIC (decisión DE-13). Instalación descrita en el
+**Estado del README:** v0.5. **Infraestructura:** datacenter de DATIC (decisión DE-13). Instalación descrita en el
 manual MAN-01 (el sistema no se ha instalado en ningún ambiente institucional).
 
 ## Descripción
@@ -37,6 +37,8 @@ las capas por WMS, WFS y OGC API – Features; Keycloak gestiona la identidad. D
 | `despliegue/` | Manifiestos de K3s y configuración por ambiente en los servidores de DATIC |
 | `monitoreo/` | Alertas y tableros (Prometheus, Grafana, Loki) |
 | `Documentación/` | Manuales, modelo de datos, pruebas y arquitectura (exigido por la guía 4.2) |
+| `uso-y-apropiacion/` | Estrategia de uso y apropiación (implementación) y sus anexos A a F en los formatos MEDE01.08.04 |
+| `solicitud/` | Trámite ante DATIC: oficio de paso a producción (SOL-01) y formato de aprovisionamiento F001 diligenciado |
 
 ## Tecnologías (Taller 2, Tabla 27)
 
@@ -83,6 +85,8 @@ guardan en el repositorio: se gestionan en el gestor de secretos (Taller 2, §8.
 | Arquitectura de producción (ARQ-01 v1.1: lógica y física en DATIC) y diagramas | `Documentación/Arquitectura/` |
 | Manuales de instalación (MAN-01), operación (MAN-02), mantenimiento (MAN-03) y copias de seguridad (MAN-04) | `Documentación/Manuales/` |
 | Plan, casos, informes y actas de pruebas PRU-00 a PRU-07 (paquete de pruebas) | `Documentación/Pruebas/` |
+| Estrategia de uso y apropiación (UYA-01) y anexos A a F | `uso-y-apropiacion/` |
+| Oficio de paso a producción (SOL-01) y formato de aprovisionamiento F001 | `solicitud/` |
 
 ## Limitaciones conocidas
 
@@ -99,4 +103,5 @@ Responsable funcional, CTO del organismo y contacto técnico: **dato pendiente d
 ## Créditos académicos
 
 Equipo del Taller 2: Hillary Barrios Ordoñez, Danna Camila Forero Borda, Karol Andrea Hoyos Echandia, Mariana Durán Hoyos.
-Paquete técnico de producción (Taller 3): Danna Camila Forero Borda. Paquete de pruebas (Taller 3): Karol Andrea Hoyos Echandia.
+Paquete técnico de producción y solicitud (Taller 3): Danna Camila Forero Borda. Paquete de pruebas (Taller 3): Karol Andrea Hoyos Echandia.
+Estrategia de uso y apropiación (Taller 3, implementación): Hillary Barrios Ordoñez y Mariana Durán Hoyos.
