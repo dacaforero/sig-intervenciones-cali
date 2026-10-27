@@ -30,3 +30,6 @@ Thumbs.db
 *.docx
 *.xlsx
 ~$*
+# Excepciones: formatos institucionales diligenciados que son el entregable mismo
+!uso-y-apropiacion/anexos/*.xlsx
+!solicitud/*.docx
